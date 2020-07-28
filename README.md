@@ -64,7 +64,7 @@ export PATH="$PYENV_ROOT/completions/pyenv.bash:$PATH"
 
 `Sample Test Result`:
 
-===================================== test session starts =====================================
+====================== test session starts ========================
 
 platform darwin -- Python 3.8.2, pytest-5.4.3, py-1.9.0, pluggy-0.13.1 -- /Volumes/My_Volume/NewPage/Monday-KT/Ashik/BDD-Gherkin/bdd-gherkin-api-test-automation-demo/tests/.venv/bin/python
 
@@ -132,7 +132,7 @@ collected 7 items / 2 deselected / 5 selected
     PASSED
 
 
-====================================== warnings summary ========================================
+============================= warnings summary ==========================
 
 .venv/lib/python3.8/site-packages/pytest_bdd/plugin.py:86
 
@@ -148,4 +148,4 @@ collected 7 items / 2 deselected / 5 selected
 
 -- Docs: https://docs.pytest.org/en/latest/warnings.html
 
-================================== 5 passed, 2 deselected, 2 warnings in 2.66s ================================
+=================== 5 passed, 2 deselected, 2 warnings in 2.66s ====================
