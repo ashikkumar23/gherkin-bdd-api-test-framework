@@ -1,20 +1,21 @@
 # **bdd-gherkin-api-test-automation-demo**
 
-### Description:
+
+## Description:
 
 Automated CRUD ( i.e., `POST`, `GET`, `UPDATE`, `DELETE` ) operations using `pytest` and `pytest-bdd`
 
-### Prerequisites:
 
-- `requests` `pytest` `pytest-bdd`
+## Prerequisites:
 
-### Installation Steps:
+`requests` `pytest` `pytest-bdd`
+
+
+## Installation Steps:
 
 In order to get the tests to run locally, you need to install the following pieces of software.
 
-###### NOTE: All commands shall be executed from Automation Project root directory:
-
-`../[PROJECT_DIR]/tests/`.
+###### NOTE: All commands shall be executed from Automation Project root directory: `../[PROJECT_DIR]/tests/`
 
 #### MacOS
 
@@ -44,7 +45,7 @@ export PATH="$PYENV_ROOT/completions/pyenv.bash:$PATH"
 - Install all project dependencies with `pip install -r requirements.txt`
 
 
-### Project Contents:
+## Project Contents:
 
 `tests/` directory contains `features/` and `step_definitions/` sub-directories.
 
@@ -52,7 +53,8 @@ export PATH="$PYENV_ROOT/completions/pyenv.bash:$PATH"
 
 `step_definitions/test_sample.py` file contains corresponding step implementation of `sample.feature` file for each of the BDD statements.
 
-### Test Execution:
+
+## Test Execution:
 
 - Fork the repo `bdd-gherkin-api-test-automation-demo`
 - Clone the repo to your local
@@ -60,7 +62,16 @@ export PATH="$PYENV_ROOT/completions/pyenv.bash:$PATH"
 - Run the command: `pytest -vv --gherkin-terminal-reporter --reruns 1 --reruns-delay 1 --tags="automated"`
 
 
-### Output:
+## Pycharm Edit Configuration:
+
+- Go to `Edit Configurations...`
+- Add `New Configuration` ( `+` sign ) > `Python tests` > `pytest`
+- Provide `Script path` and `Working directory`
+- Select required `Python interpreter`
+- And, `Additional Arguments`: `-vv --gherkin-terminal-reporter --reruns 1 --reruns-delay 1 --tags="automated"`
+
+
+## Output:
 
 `Sample Test Result`:
 
