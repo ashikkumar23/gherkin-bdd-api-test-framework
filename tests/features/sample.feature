@@ -13,7 +13,6 @@ Scenario Outline: POST example
     When I send "POST" HTTP request with <payload>
     Then I receive valid HTTP response code "201" for "POST"
     And I expect response body "POST" is non-empty
-
     Examples:
         |   payload                                         |
         |   {"title": "foo", "body": "bar", "userId": 1}    |
@@ -34,7 +33,6 @@ Scenario Outline: UPDATE example
 	When I send "PUT" HTTP request with <payload>
     Then I receive valid HTTP response code "200" for "PUT"
 	And I expect response body "PUT" is non-empty
-
     Examples:
         |   payload                                                         |
         |   {"id": 1, "title": "abc", "body": "xyz", "userId": 1}           |
@@ -47,7 +45,6 @@ Scenario Outline: DELETE example
     When I send "DELETE" HTTP request with <payload>
     Then I receive valid HTTP response code "200" for "DELETE"
 	And I expect response body "DELETE" is empty
-
     Examples:
         |   payload                                         |
         |   {"title": "foo", "body": "bar", "userId": 1}    |
