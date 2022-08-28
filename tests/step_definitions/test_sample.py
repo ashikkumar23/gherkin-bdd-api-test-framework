@@ -1,107 +1,39 @@
-import ast
 import pytest
-import requests
-from pytest_bdd import given, when, then, parsers, scenarios
-import json
+from pytest_bdd import when, scenarios
 
-scenarios('sample.feature', strict_gherkin=False)
+from utils.utils import post_request, get_request, put_request, delete_request
 
-
-@given('I set sample REST API URL')
-def set_rest_api_url():
-    pytest.globalDict['api_url'] = 'http://jsonplaceholder.typicode.com'
+scenarios('sample.feature')
 
 
-@given(parsers.parse('I set "{request_type}" posts api endpoint'))
-def set_post_and_get_api_endpoint(request_type):
-    if request_type == "POST":
-        pytest.globalDict['post_api_endpoint'] = pytest.globalDict['api_url'] + '/posts'
-        print(f"POST ENDPOINT URL: {pytest.globalDict['post_api_endpoint']}")
-    elif request_type == "GET":
-        pytest.globalDict['get_api_endpoint'] = pytest.globalDict['api_url'] + '/posts/'
-        print(f"GET ENDPOINT URL: {pytest.globalDict['get_api_endpoint']}")
+@pytest.fixture(scope='session')
+def context():
+    return {}
 
 
-@given(parsers.parse('I set header param request content type as "{header_content_type}"'))
-def set_header_without_request_body(header_content_type):
-    pytest.globalDict['Content-Type'] = header_content_type
+@when('I send a POST HTTP request with <payload>')
+def send_post_request(context, payload, set_headers):
+    post_response = post_request(payload=payload, headers=set_headers)
+    context['post_response'] = post_response.json()
+    context['post_status_code'] = post_response.status_code
 
 
-@given(parsers.parse('I set "{request_type}" posts api endpoint for "{test_id}"'))
-def set_put_and_delete_api_endpoint(request_type, test_id):
-    if request_type == "PUT":
-        pytest.globalDict['put_api_endpoint'] = pytest.globalDict['api_url'] + '/posts/' + test_id
-        print(f"PUT ENDPOINT URL: {pytest.globalDict['put_api_endpoint']}")
-    elif request_type == "DELETE":
-        pytest.globalDict['delete_api_endpoint'] = pytest.globalDict['api_url'] + '/posts/' + test_id
-        print(f"DELETE ENDPOINT URL: {pytest.globalDict['delete_api_endpoint']}")
+@when('I send a GET HTTP request')
+def send_get_request(context, set_headers):
+    get_response = get_request(headers=set_headers)
+    context['get_response'] = get_response.json()
+    context['get_status_code'] = get_response.status_code
 
 
-@when(parsers.parse('I send "{request_type}" HTTP request'))
-def send_get_request(request_type):
-    if request_type == "GET":
-        response = requests.get(url=pytest.globalDict['get_api_endpoint'],
-                                headers={"content-type": pytest.globalDict['Content-Type'], "charset": "UTF-8"})
-        pytest.globalDict['get_response'] = response.json()
-        print(f"get_response: {pytest.globalDict['get_response']}")
-        pytest.globalDict['get_status_code'] = response.status_code
+@when('I send a PUT HTTP request with <payload>')
+def send_put_request(context, payload, set_headers):
+    put_response = put_request(payload=payload, headers=set_headers)
+    context['put_response'] = put_response.json()
+    context['put_status_code'] = put_response.status_code
 
 
-@when(parsers.parse('I send "{request_type}" HTTP request with <payload>'))
-def send_post_request(request_type, payload):
-    if request_type == "POST":
-        response = requests.post(url=pytest.globalDict['post_api_endpoint'],
-                                 data=json.dumps(ast.literal_eval(payload)),
-                                 headers={"content-type": pytest.globalDict['Content-Type'], "charset": "UTF-8"})
-        pytest.globalDict['post_response'] = response.json()
-        print(f"post_response: {pytest.globalDict['post_response']}")
-        print(f"id: {pytest.globalDict['post_response']['id']}")
-        pytest.globalDict['post_status_code'] = response.status_code
-    if request_type == "PUT":
-        response = requests.put(url=pytest.globalDict['put_api_endpoint'],
-                                data=json.dumps(ast.literal_eval(payload)),
-                                headers={"content-type": pytest.globalDict['Content-Type'], "charset": "UTF-8"})
-        pytest.globalDict['put_response'] = response.json()
-        print(f"put_response: {pytest.globalDict['put_response']}")
-        pytest.globalDict['put_status_code'] = response.status_code
-    elif request_type == "DELETE":
-        response = requests.delete(url=pytest.globalDict['delete_api_endpoint'],
-                                   data=payload,
-                                   headers={"content-type": pytest.globalDict['Content-Type'], "charset": "UTF-8"})
-        pytest.globalDict['delete_response'] = response.json()
-        print(f"delete_response: {pytest.globalDict['delete_response']}")
-        pytest.globalDict['delete_status_code'] = response.status_code
-
-
-@then(parsers.parse('I receive valid HTTP response code "{status_code}" for "{request_type}"'))
-def validate_request(status_code, request_type):
-    if request_type == "POST":
-        # print(pytest.globalDict['post_status_code'])  # For Debugging
-        assert pytest.globalDict['post_status_code'] == int(status_code)
-    elif request_type == "GET":
-        # print(pytest.globalDict['get_status_code'])  # For Debugging
-        assert pytest.globalDict['get_status_code'] == int(status_code)
-    elif request_type == "PUT":
-        # print(pytest.globalDict['put_status_code'])  # For Debugging
-        assert pytest.globalDict['put_status_code'] == int(status_code)
-    elif request_type == "DELETE":
-        # print(pytest.globalDict['delete_status_code'])  # For Debugging
-        assert pytest.globalDict['delete_status_code'] == int(status_code)
-
-
-@then(parsers.parse('I expect response body "{request_type}" is non-empty'))
-def validate_response_body(request_type):
-    if request_type == "POST":
-        assert pytest.globalDict['post_response'] is not None
-    elif request_type == "GET":
-        assert pytest.globalDict['get_response'] is not None
-    elif request_type == "PUT":
-        assert pytest.globalDict['put_response'] is not None
-    elif request_type == "DELETE":
-        assert pytest.globalDict['delete_response'] == {}
-
-
-@then(parsers.parse('I expect response body "{request_type}" is empty'))
-def validate_delete_response_body(request_type):
-    if request_type == "DELETE":
-        assert pytest.globalDict['delete_response'] == {}
+@when('I send a DELETE HTTP request')
+def send_delete_request(context, set_headers):
+    delete_response = delete_request(headers=set_headers)
+    context['delete_response'] = delete_response.json()
+    context['delete_status_code'] = delete_response.status_code
