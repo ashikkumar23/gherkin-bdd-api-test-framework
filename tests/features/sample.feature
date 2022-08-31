@@ -3,17 +3,15 @@ Feature: Test CRUD methods in Sample REST API Testing Framework
     to ensure POST, GET, UPDATE, DELETE HTTP methods are working as expected
 
 Background:
-    Given I set sample REST API URL
+    Given I set sample "rest_api_base_url"
     And I set header param request content type as "application/json"
 
 @automated
 Scenario Outline: POST example
-    Given I set "POST" posts api endpoint
-#    When I set header param request content type as "application/json"  # Commented and added this to Background step
-    When I send "POST" HTTP request with <payload>
-    Then I receive valid HTTP response code "201" for "POST"
-    And I expect response body "POST" is non-empty
-
+    Given I set POST endpoint to "/posts" for creating posts
+    When I send a POST HTTP request with <payload>
+    Then I expect HTTP response code of "POST" to be "201"
+    And I expect response body of "POST" to be non-empty
     Examples:
         |   payload                                         |
         |   {"title": "foo", "body": "bar", "userId": 1}    |
@@ -21,34 +19,25 @@ Scenario Outline: POST example
 
 @automated
 Scenario: GET example
-    Given I set "GET" posts api endpoint
-#    When I set header param request content type as "application/json"  # Commented and added this to Background step
-    When I send "GET" HTTP request
-    Then I receive valid HTTP response code "200" for "GET"
-	And I expect response body "GET" is non-empty
+    Given I set GET endpoint to "/posts" for fetching posts
+    When I send a GET HTTP request
+    Then I expect HTTP response code of "GET" to be "200"
+    And I expect response body of "GET" to be non-empty
 
 @manual  # This scenario will be skipped during test execution
 Scenario Outline: UPDATE example
-    Given I set "PUT" posts api endpoint for "1"
-#    When I set header param request content type as "application/json"  # Commented and added this to Background step
-	When I send "PUT" HTTP request with <payload>
-    Then I receive valid HTTP response code "200" for "PUT"
-	And I expect response body "PUT" is non-empty
-
+    Given I set UPDATE endpoint to "/posts/1" for updating posts
+    When I send a PUT HTTP request with <payload>
+    Then I expect HTTP response code of "PUT" to be "200"
+    And I expect response body of "PUT" to be non-empty
     Examples:
         |   payload                                                         |
         |   {"id": 1, "title": "abc", "body": "xyz", "userId": 1}           |
         |   {"id": 1, "title": "testing", "body": "testing", "userId": 1}   |
 
 @automated
-Scenario Outline: DELETE example
-    Given I set "DELETE" posts api endpoint for "1"
-#    When I set header param request content type as "application/json"  # Commented and added this to Background step
-    When I send "DELETE" HTTP request with <payload>
-    Then I receive valid HTTP response code "200" for "DELETE"
-	And I expect response body "DELETE" is empty
-
-    Examples:
-        |   payload                                         |
-        |   {"title": "foo", "body": "bar", "userId": 1}    |
-        |   {"title": "abc", "body": "xyz", "userId": 1}    |
+Scenario: DELETE example
+    Given I set DELETE endpoint to "/posts/1" for deleting posts
+    When I send a DELETE HTTP request
+    Then I expect HTTP response code of "DELETE" to be "200"
+    And I expect response body of "DELETE" to be empty

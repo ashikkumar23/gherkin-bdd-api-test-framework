@@ -5,7 +5,6 @@ __pycache__/
 ../.pytest_cache/
 ../.DS_Store
 ../.idea/
-.idea/
 .DS_Store
 tests/.DS_Store
 
@@ -112,10 +111,8 @@ venv.bak/
 #ADF
 test_bundle.zip
 wheelhouse/
-.pytest_cache/
 
 #Selenium_drivers
 /selenium_drivers
 
 #Sensitive data
-.local.env
