@@ -10,6 +10,8 @@ from cucumber_tag_expressions import parse
 from step_definitions.test_common import *
 from step_definitions.test_assertions import *
 
+from lib.terminal_report import pytest_terminal_summary
+
 
 def pytest_configure(config):
     config.option.keyword = 'automated'
