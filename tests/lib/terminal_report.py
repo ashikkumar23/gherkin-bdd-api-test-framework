@@ -13,7 +13,7 @@ def _custom_short_summary(terminalreporter: TerminalReporter):
         terminalreporter: Instance of _pytest.terminal.TerminalReporter class
 
     Function:
-        Modifies pytest short report summary in the format:
+        Modifies pytest report summary in the format:
         ```
             Total Test Duration: <total_duration> seconds
             Total Tests Collected: <total_count>
