@@ -38,7 +38,9 @@ def _custom_short_summary(terminalreporter: TerminalReporter):
         bold=True,
     )
 
-    terminalreporter.write(f"Total Test Duration: {total_duration:.2f} seconds", bold=True)
+    terminalreporter.write(
+        f"Total Test Duration: {total_duration:.2f} seconds", bold=True
+    )
     terminalreporter.write("\n")
 
     terminalreporter.write(f"Total Tests Collected: {total_count}", bold=True)
