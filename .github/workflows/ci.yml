@@ -22,9 +22,6 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install --user virtualenv
-          python3 -m virtualenv .venv
-          source ./.venv/bin/activate
           pip install -r requirements.txt --use-pep517
       - name: Load .env file
         uses: xom9ikk/dotenv@v2
