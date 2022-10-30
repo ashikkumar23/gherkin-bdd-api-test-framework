@@ -21,3 +21,12 @@ def pytest_configure(config):
 
 def pytest_addoption(parser):
     parser.addoption("--tags", metavar="str", help="Will filter tests by given tags")
+
+
+def pytest_collection_modifyitems(config, items):
+    raw_tags = config.option.tags
+    if raw_tags is not None:
+        for item in items:
+            item_tags = [marker.name for marker in item.own_markers]
+            if not parse(raw_tags).evaluate(item_tags):
+                item.add_marker(pytest.mark.not_in_scope)

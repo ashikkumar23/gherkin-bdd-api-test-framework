@@ -1,7 +1,13 @@
 import pytest
 from pytest_bdd import when, scenarios
 
-from utils.utils import post_request, get_request, put_request, delete_request
+from utils.utils import (
+    post_request,
+    get_request,
+    put_request,
+    delete_request,
+    read_file,
+)
 
 scenarios("sample.feature")
 
@@ -13,7 +19,8 @@ def context():
 
 @when("I send a POST HTTP request with <payload>")
 def send_post_request(context, payload, set_headers):
-    post_response = post_request(payload=payload, headers=set_headers)
+    request_body = read_file(payload)
+    post_response = post_request(payload=request_body, headers=set_headers)
     context["post_response"] = post_response.json()
     context["post_status_code"] = post_response.status_code
 
@@ -27,7 +34,8 @@ def send_get_request(context, set_headers):
 
 @when("I send a PUT HTTP request with <payload>")
 def send_put_request(context, payload, set_headers):
-    put_response = put_request(payload=payload, headers=set_headers)
+    request_body = read_file(payload)
+    put_response = put_request(payload=request_body, headers=set_headers)
     context["put_response"] = put_response.json()
     context["put_status_code"] = put_response.status_code
 
