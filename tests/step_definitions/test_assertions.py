@@ -4,7 +4,7 @@ from pytest_bdd import then, parsers
 
 @then(
     parsers.parse(
-        'I expect HTTP response code of "{request_type}" to be "{status_code}"'
+        'I expect the HTTP response code of "{request_type}" to be "{status_code}"'
     )
 )
 def validate_status_code(context, request_type, status_code):
@@ -18,8 +18,8 @@ def validate_status_code(context, request_type, status_code):
         assert_that(context["delete_status_code"]).is_equal_to(int(status_code))
 
 
-@then(parsers.parse('I expect response body of "{request_type}" to be empty'))
-@then(parsers.parse('I expect response body of "{request_type}" to be non-empty'))
+@then(parsers.parse('I expect the response body of "{request_type}" to be empty'))
+@then(parsers.parse('I expect the response body of "{request_type}" to be non-empty'))
 def validate_response_body(context, request_type):
     if request_type == "POST":
         assert_that(context["post_response"]).is_not_equal_to(None)

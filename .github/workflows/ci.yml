@@ -1,0 +1,36 @@
+name: Run tests
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: Test scenario tags
+        required: true
+        default: smoke
+jobs:
+  run_automated_tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./tests
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install --user virtualenv
+          python3 -m virtualenv .venv
+          source ./.venv/bin/activate
+          pip install -r requirements.txt --use-pep517
+      - name: Load .env file
+        uses: xom9ikk/dotenv@v2
+        with:
+          path: ./tests/
+      - name: Run tests
+        run: >
+          pytest -v --gherkin-terminal-reporter --reruns 1 --reruns-delay 1
+          --tags="${{ github.event.inputs.tags }}" -s --color=yes

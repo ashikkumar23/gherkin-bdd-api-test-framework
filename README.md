@@ -50,6 +50,9 @@ export PATH="$PYENV_ROOT/completions/pyenv.bash:$PATH"
 
 ```
 bdd-gherkin-test-automation-framework/
+├─ .github/
+│  ├─ workflows/
+│  │  ├─ ci.yml
 ├─ tests/
 │  ├─ data/
 │  │  ├─ post_payload_1.json
@@ -65,6 +68,8 @@ bdd-gherkin-test-automation-framework/
 │  │  ├─ test_sample.py
 │  │  ├─ test_common.py
 │  ├─ utils/
+│  │  ├─ __init__.py
+│  │  ├─ custom_exceptions.py
 │  │  ├─ utils.py
 │  ├─ .env
 │  ├─ .gitignore

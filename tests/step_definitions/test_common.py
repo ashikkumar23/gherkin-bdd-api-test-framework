@@ -15,16 +15,16 @@ def set_rest_api_url():
 
 @pytest.fixture
 @given(
-    parsers.parse('I set header param request content type as "{header_content_type}"')
+    parsers.parse('I set the header param request content type as "{header_content_type}"')
 )
 def set_headers(header_content_type):
     return {"Content-type": f"{header_content_type}; charset=UTF-8"}
 
 
-@given(parsers.parse('I set DELETE endpoint to "{endpoint_url}" for deleting posts'))
-@given(parsers.parse('I set UPDATE endpoint to "{endpoint_url}" for updating posts'))
-@given(parsers.parse('I set GET endpoint to "{endpoint_url}" for fetching posts'))
-@given(parsers.parse('I set POST endpoint to "{endpoint_url}" for creating posts'))
+@given(parsers.parse('I set the DELETE endpoint to "{endpoint_url}" for deleting posts'))
+@given(parsers.parse('I set the UPDATE endpoint to "{endpoint_url}" for updating posts'))
+@given(parsers.parse('I set the GET endpoint to "{endpoint_url}" for fetching posts'))
+@given(parsers.parse('I set the POST endpoint to "{endpoint_url}" for creating posts'))
 def set_api_endpoint(endpoint_url):
     pytest.globalDict["api_endpoint"] = (
         pytest.globalDict["rest_api_base_url"] + endpoint_url
