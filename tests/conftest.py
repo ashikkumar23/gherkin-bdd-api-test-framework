@@ -30,3 +30,8 @@ def pytest_collection_modifyitems(config, items):
             item_tags = [marker.name for marker in item.own_markers]
             if not parse(raw_tags).evaluate(item_tags):
                 item.add_marker(pytest.mark.not_in_scope)
+
+
+@pytest.fixture(scope="session")
+def context():
+    return {}

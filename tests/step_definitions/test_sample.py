@@ -12,11 +12,6 @@ from utils.utils import (
 scenarios("sample.feature")
 
 
-@pytest.fixture(scope="session")
-def context():
-    return {}
-
-
 @when("I send a POST HTTP request with <payload>")
 def send_post_request(context, payload, set_headers):
     request_body = read_file(payload)
