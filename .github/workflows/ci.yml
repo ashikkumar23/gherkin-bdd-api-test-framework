@@ -39,7 +39,6 @@ jobs:
       # Create virtual environment
       - name: Create and activate virtual environment
         run: |
-#          python3 -m pip install --user virtualenv
           python3 -m virtualenv .venv
           source ./.venv/bin/activate
 
@@ -48,6 +47,7 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt --use-pep517
+          which python
 
       # GitHub Action to read .env file and add variables to GITHUB_ENV
       - name: Load .env file
