@@ -36,18 +36,11 @@ jobs:
         with:
           python-version: 3.8
 
-      # Create virtual environment
-      - name: Create and activate virtual environment
-        run: |
-          python3 -m venv env
-          source env/bin/activate
-
       # Setup dependencies by running requirements.txt
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt --use-pep517
-          which python
 
       # GitHub Action to read .env file and add variables to GITHUB_ENV
       - name: Load .env file
@@ -59,7 +52,7 @@ jobs:
       - name: Run tests
         run: >
           python3 -m pytest -v --gherkin-terminal-reporter --reruns 1 --reruns-delay 1
-          --tags="${{ github.event.inputs.tags }}" -s --color=yes --html=test_report.html --self-contained-html
+          --tags="${{ github.event.inputs.tags }}" -s --color=yes --html=./tests/output/reports/test_report.html --self-contained-html
 
       # Upload html result as artifact
       - name: Upload pytest test results
