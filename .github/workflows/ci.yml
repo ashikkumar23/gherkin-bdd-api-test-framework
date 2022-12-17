@@ -52,7 +52,7 @@ jobs:
       - name: Run tests
         run: >
           python3 -m pytest -v --gherkin-terminal-reporter --reruns 1 --reruns-delay 1
-          --tags="${{ github.event.inputs.tags }}" -s --color=yes --html=output/reports/test_report.html --self-contained-html
+          --tags="${{ github.event.inputs.tags }}" -s --color=yes --html=test_report.html --self-contained-html
 
       # Upload html result as artifact
       - name: Upload pytest test results
@@ -60,5 +60,5 @@ jobs:
         with:
           name: pytest-results
           path: |
-            output/reports/test_report.html
+            output/reports/
         if: ${{ always() }}
