@@ -65,6 +65,9 @@ bdd-gherkin-test-automation-framework/
 │  │  ├─ sample.feature
 │  ├─ lib/
 │  │  ├─ terminal_report.py
+│  ├─ output/
+│  │  ├─ reports/
+│  │  │  ├─ test_report.html
 │  ├─ step_definitions/
 │  │  ├─ test_assertions.py
 │  │  ├─ test_sample.py

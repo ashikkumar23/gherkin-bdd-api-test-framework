@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>test_report.html</title>
+    <style>body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  /* do not increase min-width as some may use split screens */
+  min-width: 800px;
+  color: #999;
+}
+
+h1 {
+  font-size: 24px;
+  color: black;
+}
+
+h2 {
+  font-size: 16px;
+  color: black;
+}
+
+p {
+  color: black;
+}
+
+a {
+  color: #999;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+#environment td {
+  padding: 5px;
+  border: 1px solid #E6E6E6;
+}
+#environment tr:nth-child(odd) {
+  background-color: #f6f6f6;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed,
+.passed .col-result {
+  color: green;
+}
+
+span.skipped,
+span.xfailed,
+span.rerun,
+.skipped .col-result,
+.xfailed .col-result,
+.rerun .col-result {
+  color: orange;
+}
+
+span.error,
+span.failed,
+span.xpassed,
+.error .col-result,
+.failed .col-result,
+.xpassed .col-result {
+  color: red;
+}
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+#results-table {
+  border: 1px solid #e6e6e6;
+  color: #999;
+  font-size: 12px;
+  width: 100%;
+}
+#results-table th,
+#results-table td {
+  padding: 5px;
+  border: 1px solid #E6E6E6;
+  text-align: left;
+}
+#results-table th {
+  font-weight: bold;
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+.log {
+  background-color: #e6e6e6;
+  border: 1px solid #e6e6e6;
+  color: black;
+  display: block;
+  font-family: "Courier New", Courier, monospace;
+  height: 230px;
+  overflow-y: scroll;
+  padding: 5px;
+  white-space: pre-wrap;
+}
+.log:only-child {
+  height: inherit;
+}
+
+div.image {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin-left: 5px;
+  overflow: hidden;
+  width: 320px;
+}
+div.image img {
+  width: 320px;
+}
+
+div.video {
+  border: 1px solid #e6e6e6;
+  float: right;
+  height: 240px;
+  margin-left: 5px;
+  overflow: hidden;
+  width: 320px;
+}
+div.video video {
+  overflow: hidden;
+  width: 320px;
+  height: 240px;
+}
+
+.collapsed {
+  display: none;
+}
+
+.expander::after {
+  content: " (show details)";
+  color: #BBB;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.collapser::after {
+  content: " (hide details)";
+  color: #BBB;
+  font-style: italic;
+  cursor: pointer;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+  cursor: pointer;
+}
+
+.sort-icon {
+  font-size: 0px;
+  float: left;
+  margin-right: 5px;
+  margin-top: 5px;
+  /*triangle*/
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+}
+.inactive .sort-icon {
+  /*finish triangle*/
+  border-top: 8px solid #E6E6E6;
+}
+.asc.active .sort-icon {
+  /*finish triangle*/
+  border-bottom: 8px solid #999;
+}
+.desc.active .sort-icon {
+  /*finish triangle*/
+  border-top: 8px solid #999;
+}
+</style></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) { // eslint-disable-line no-redeclare
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function findAll(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sortColumn(elem) {
+    toggleSortStates(elem);
+    const colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    let key;
+    if (elem.classList.contains('result')) {
+        key = keyResult;
+    } else if (elem.classList.contains('links')) {
+        key = keyLink;
+    } else {
+        key = keyAlpha;
+    }
+    sortTable(elem, key(colIndex));
+}
+
+function showAllExtras() { // eslint-disable-line no-unused-vars
+    findAll('.col-result').forEach(showExtras);
+}
+
+function hideAllExtras() { // eslint-disable-line no-unused-vars
+    findAll('.col-result').forEach(hideExtras);
+}
+
+function showExtras(colresultElem) {
+    const extras = colresultElem.parentNode.nextElementSibling;
+    const expandcollapse = colresultElem.firstElementChild;
+    extras.classList.remove('collapsed');
+    expandcollapse.classList.remove('expander');
+    expandcollapse.classList.add('collapser');
+}
+
+function hideExtras(colresultElem) {
+    const extras = colresultElem.parentNode.nextElementSibling;
+    const expandcollapse = colresultElem.firstElementChild;
+    extras.classList.add('collapsed');
+    expandcollapse.classList.remove('collapser');
+    expandcollapse.classList.add('expander');
+}
+
+function showFilters() {
+    let visibleString = getQueryParameter('visible') || 'all';
+    visibleString = visibleString.toLowerCase();
+    const checkedItems = visibleString.split(',');
+
+    const filterItems = document.getElementsByClassName('filter');
+    for (let i = 0; i < filterItems.length; i++) {
+        filterItems[i].hidden = false;
+
+        if (visibleString != 'all') {
+            filterItems[i].checked = checkedItems.includes(filterItems[i].getAttribute('data-test-result'));
+            filterTable(filterItems[i]);
+        }
+    }
+}
+
+function addCollapse() {
+    // Add links for show/hide all
+    const resulttable = find('table#results-table');
+    const showhideall = document.createElement('p');
+    showhideall.innerHTML = '<a href="javascript:showAllExtras()">Show all details</a> / ' +
+                            '<a href="javascript:hideAllExtras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    findAll('.col-result').forEach(function(elem) {
+        const collapsed = getQueryParameter('collapsed') || 'Passed';
+        const extras = elem.parentNode.nextElementSibling;
+        const expandcollapse = document.createElement('span');
+        if (extras.classList.contains('collapsed')) {
+            expandcollapse.classList.add('expander');
+        } else if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add('collapsed');
+            expandcollapse.classList.add('expander');
+        } else {
+            expandcollapse.classList.add('collapser');
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener('click', function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains('collapsed')) {
+                showExtras(event.currentTarget);
+            } else {
+                hideExtras(event.currentTarget);
+            }
+        });
+    });
+}
+
+function getQueryParameter(name) {
+    const match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () { // eslint-disable-line no-unused-vars
+    resetSortHeaders();
+
+    addCollapse();
+
+    showFilters();
+
+    sortColumn(find('.initial-sort'));
+
+    findAll('.sortable').forEach(function(elem) {
+        elem.addEventListener('click',
+            function() {
+                sortColumn(elem);
+            }, false);
+    });
+}
+
+function sortTable(clicked, keyFunc) {
+    const rows = findAll('.results-table-row');
+    const reversed = !clicked.classList.contains('asc');
+    const sortedRows = sort(rows, keyFunc, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    const thead = document.getElementById('results-table-head');
+    document.getElementById('results-table').remove();
+    const parent = document.createElement('table');
+    parent.id = 'results-table';
+    parent.appendChild(thead);
+    sortedRows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName('BODY')[0].appendChild(parent);
+}
+
+function sort(items, keyFunc, reversed) {
+    const sortArray = items.map(function(item, i) {
+        return [keyFunc(item), i];
+    });
+
+    sortArray.sort(function(a, b) {
+        const keyA = a[0];
+        const keyB = b[0];
+
+        if (keyA == keyB) return 0;
+
+        if (reversed) {
+            return keyA < keyB ? 1 : -1;
+        } else {
+            return keyA > keyB ? 1 : -1;
+        }
+    });
+
+    return sortArray.map(function(item) {
+        const index = item[1];
+        return items[index];
+    });
+}
+
+function keyAlpha(colIndex) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[colIndex].firstChild.data.toLowerCase();
+    };
+}
+
+function keyLink(colIndex) {
+    return function(elem) {
+        const dataCell = elem.childNodes[1].childNodes[colIndex].firstChild;
+        return dataCell == null ? '' : dataCell.innerText.toLowerCase();
+    };
+}
+
+function keyResult(colIndex) {
+    return function(elem) {
+        const strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+            'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[colIndex].firstChild.data);
+    };
+}
+
+function resetSortHeaders() {
+    findAll('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    findAll('.sortable').forEach(function(elem) {
+        const icon = document.createElement('div');
+        icon.className = 'sort-icon';
+        icon.textContent = 'vvv';
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove('desc', 'active');
+        elem.classList.add('asc', 'inactive');
+    });
+}
+
+function toggleSortStates(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        resetSortHeaders();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function isAllRowsHidden(value) {
+    return value.hidden == false;
+}
+
+function filterTable(elem) { // eslint-disable-line no-unused-vars
+    const outcomeAtt = 'data-test-result';
+    const outcome = elem.getAttribute(outcomeAtt);
+    const classOutcome = outcome + ' results-table-row';
+    const outcomeRows = document.getElementsByClassName(classOutcome);
+
+    for(let i = 0; i < outcomeRows.length; i++){
+        outcomeRows[i].hidden = !elem.checked;
+    }
+
+    const rows = findAll('.results-table-row').filter(isAllRowsHidden);
+    const allRowsHidden = rows.length == 0 ? true : false;
+    const notFoundMessage = document.getElementById('not-found-message');
+    notFoundMessage.hidden = !allRowsHidden;
+}
+</script>
+    <h1>test_report.html</h1>
+    <p>Report generated on 16-Dec-2022 at 14:52:22 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v3.2.0</p>
+    <h2>Environment</h2>
+    <table id="environment">
+      <tr>
+        <td>Packages</td>
+        <td>{"pluggy": "0.13.1", "pytest": "5.4.2"}</td></tr>
+      <tr>
+        <td>Platform</td>
+        <td>macOS-13.0.1-arm64-arm-64bit</td></tr>
+      <tr>
+        <td>Plugins</td>
+        <td>{"bdd": "4.0.2", "html": "3.2.0", "metadata": "2.0.4", "rerunfailures": "9.0"}</td></tr>
+      <tr>
+        <td>Python</td>
+        <td>3.8.13</td></tr></table>
+    <h2>Summary</h2>
+    <p>6 tests ran in 3.72 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="passed">6 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="failed">0 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>, <input checked="true" class="filter" data-test-result="rerun" disabled="true" hidden="true" name="filter_checkbox" onChange="filterTable(this)" type="checkbox"/><span class="rerun">0 rerun</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th class="sortable" col="duration">Duration</th>
+          <th class="sortable links" col="links">Links</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">step_definitions/test_sample.py::test_post_route[post_payload_1.json]</td>
+          <td class="col-duration">0.63</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Request Method: POST 
+Request URI: http://jsonplaceholder.typicode.com/posts 
+Request Header: {&#x27;Content-type&#x27;: &#x27;application/json; charset=UTF-8&#x27;} 
+Request Body: {&#x27;title&#x27;: &#x27;foo&#x27;, &#x27;body&#x27;: &#x27;bar&#x27;, &#x27;userId&#x27;: 1} 
+Response Status Code: 201 
+Response Header Fields: {&#x27;Date&#x27;: &#x27;Fri, 16 Dec 2022 09:22:20 GMT&#x27;, &#x27;Content-Type&#x27;: &#x27;application/json; charset=utf-8&#x27;, &#x27;Content-Length&#x27;: &#x27;65&#x27;, &#x27;Connection&#x27;: &#x27;keep-alive&#x27;, &#x27;X-Powered-By&#x27;: &#x27;Express&#x27;, &#x27;X-Ratelimit-Limit&#x27;: &#x27;1000&#x27;, &#x27;X-Ratelimit-Remaining&#x27;: &#x27;999&#x27;, &#x27;X-Ratelimit-Reset&#x27;: &#x27;1671182572&#x27;, &#x27;Vary&#x27;: &#x27;Origin, X-HTTP-Method-Override, Accept-Encoding&#x27;, &#x27;Access-Control-Allow-Credentials&#x27;: &#x27;true&#x27;, &#x27;Cache-Control&#x27;: &#x27;no-cache&#x27;, &#x27;Pragma&#x27;: &#x27;no-cache&#x27;, &#x27;Expires&#x27;: &#x27;-1&#x27;, &#x27;Access-Control-Expose-Headers&#x27;: &#x27;Location&#x27;, &#x27;Location&#x27;: &#x27;http://jsonplaceholder.typicode.com/posts/101&#x27;, &#x27;X-Content-Type-Options&#x27;: &#x27;nosniff&#x27;, &#x27;Etag&#x27;: &#x27;W/&quot;41-GDNaWfnVU6RZhpLbye0veBaqcHA&quot;&#x27;, &#x27;Via&#x27;: &#x27;1.1 vegur&#x27;, &#x27;CF-Cache-Status&#x27;: &#x27;DYNAMIC&#x27;, &#x27;Server-Timing&#x27;: &#x27;cf-q-config;dur=8.0000008892966e-06&#x27;, &#x27;Report-To&#x27;: &#x27;{&quot;endpoints&quot;:[{&quot;url&quot;:&quot;https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=1bWq0lskMB8EOdt9WaSy%2FHmsuDr8vuCIj69zm5USZNDeMkKFNnI8uJZ7m3idAH1FS3Y6Zayf56dvK6gtwfTdRW1oi5pYyjvcf%2FTTnpCV01HYVGNIS9CfLwaeO5yQd4lgc5u7CVxc%2FI32B%2BIBRBBG&quot;}],&quot;group&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;NEL&#x27;: &#x27;{&quot;success_fraction&quot;:0,&quot;report_to&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;Server&#x27;: &#x27;cloudflare&#x27;, &#x27;CF-RAY&#x27;: &#x27;77a65a9add7168e5-FRA&#x27;, &#x27;alt-svc&#x27;: &#x27;h3=&quot;:443&quot;; ma=86400, h3-29=&quot;:443&quot;; ma=86400&#x27;} 
+Response Body: {&#x27;title&#x27;: &#x27;foo&#x27;, &#x27;body&#x27;: &#x27;bar&#x27;, &#x27;userId&#x27;: 1, &#x27;id&#x27;: 101} 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">step_definitions/test_sample.py::test_post_route[post_payload_2.json]</td>
+          <td class="col-duration">0.61</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Request Method: POST 
+Request URI: http://jsonplaceholder.typicode.com/posts 
+Request Header: {&#x27;Content-type&#x27;: &#x27;application/json; charset=UTF-8&#x27;} 
+Request Body: {&#x27;title&#x27;: &#x27;bar&#x27;, &#x27;body&#x27;: &#x27;foo&#x27;, &#x27;userId&#x27;: 2} 
+Response Status Code: 201 
+Response Header Fields: {&#x27;Date&#x27;: &#x27;Fri, 16 Dec 2022 09:22:20 GMT&#x27;, &#x27;Content-Type&#x27;: &#x27;application/json; charset=utf-8&#x27;, &#x27;Content-Length&#x27;: &#x27;65&#x27;, &#x27;Connection&#x27;: &#x27;keep-alive&#x27;, &#x27;X-Powered-By&#x27;: &#x27;Express&#x27;, &#x27;X-Ratelimit-Limit&#x27;: &#x27;1000&#x27;, &#x27;X-Ratelimit-Remaining&#x27;: &#x27;998&#x27;, &#x27;X-Ratelimit-Reset&#x27;: &#x27;1671182572&#x27;, &#x27;Vary&#x27;: &#x27;Origin, X-HTTP-Method-Override, Accept-Encoding&#x27;, &#x27;Access-Control-Allow-Credentials&#x27;: &#x27;true&#x27;, &#x27;Cache-Control&#x27;: &#x27;no-cache&#x27;, &#x27;Pragma&#x27;: &#x27;no-cache&#x27;, &#x27;Expires&#x27;: &#x27;-1&#x27;, &#x27;Access-Control-Expose-Headers&#x27;: &#x27;Location&#x27;, &#x27;Location&#x27;: &#x27;http://jsonplaceholder.typicode.com/posts/101&#x27;, &#x27;X-Content-Type-Options&#x27;: &#x27;nosniff&#x27;, &#x27;Etag&#x27;: &#x27;W/&quot;41-Bu4ZepEc4CMv77q8gsiyReMdimE&quot;&#x27;, &#x27;Via&#x27;: &#x27;1.1 vegur&#x27;, &#x27;CF-Cache-Status&#x27;: &#x27;DYNAMIC&#x27;, &#x27;Server-Timing&#x27;: &#x27;cf-q-config;dur=8.0000008892966e-06&#x27;, &#x27;Report-To&#x27;: &#x27;{&quot;endpoints&quot;:[{&quot;url&quot;:&quot;https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=D3TTS0fgjtepn70nBoIATmp0Y6Bpo2Za8tBUgw8MMYyHk3m9%2B4XApKIia49jmZlk%2FsKLBOgP%2F4s16NZfTTkbmdKf30Gmn8FXhN%2BUYD9sDpA4DTBrzLnSrXWAnkZnCq9M3ZwCQKmXcVO3RAQFTpYF&quot;}],&quot;group&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;NEL&#x27;: &#x27;{&quot;success_fraction&quot;:0,&quot;report_to&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;Server&#x27;: &#x27;cloudflare&#x27;, &#x27;CF-RAY&#x27;: &#x27;77a65a9edb3e9a39-FRA&#x27;, &#x27;alt-svc&#x27;: &#x27;h3=&quot;:443&quot;; ma=86400, h3-29=&quot;:443&quot;; ma=86400&#x27;} 
+Response Body: {&#x27;title&#x27;: &#x27;bar&#x27;, &#x27;body&#x27;: &#x27;foo&#x27;, &#x27;userId&#x27;: 2, &#x27;id&#x27;: 101} 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">step_definitions/test_sample.py::test_get_route</td>
+          <td class="col-duration">0.40</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Request Method: GET 
+Request URI: http://jsonplaceholder.typicode.com/posts 
+Request Header: {&#x27;Content-type&#x27;: &#x27;application/json; charset=UTF-8&#x27;} 
+Response Status Code: 200 
+Response Header Fields: {&#x27;Date&#x27;: &#x27;Fri, 16 Dec 2022 09:22:21 GMT&#x27;, &#x27;Content-Type&#x27;: &#x27;application/json; charset=utf-8&#x27;, &#x27;Transfer-Encoding&#x27;: &#x27;chunked&#x27;, &#x27;Connection&#x27;: &#x27;keep-alive&#x27;, &#x27;X-Powered-By&#x27;: &#x27;Express&#x27;, &#x27;X-Ratelimit-Limit&#x27;: &#x27;1000&#x27;, &#x27;X-Ratelimit-Remaining&#x27;: &#x27;999&#x27;, &#x27;X-Ratelimit-Reset&#x27;: &#x27;1671173632&#x27;, &#x27;Vary&#x27;: &#x27;Origin, Accept-Encoding&#x27;, &#x27;Access-Control-Allow-Credentials&#x27;: &#x27;true&#x27;, &#x27;Cache-Control&#x27;: &#x27;max-age=43200&#x27;, &#x27;Pragma&#x27;: &#x27;no-cache&#x27;, &#x27;Expires&#x27;: &#x27;-1&#x27;, &#x27;X-Content-Type-Options&#x27;: &#x27;nosniff&#x27;, &#x27;Etag&#x27;: &#x27;W/&quot;6b80-Ybsq/K6GwwqrYkAsFxqDXGC7DoM&quot;&#x27;, &#x27;Content-Encoding&#x27;: &#x27;gzip&#x27;, &#x27;Via&#x27;: &#x27;1.1 vegur&#x27;, &#x27;CF-Cache-Status&#x27;: &#x27;HIT&#x27;, &#x27;Age&#x27;: &#x27;8964&#x27;, &#x27;Server-Timing&#x27;: &#x27;cf-q-config;dur=6.9999987317715e-06&#x27;, &#x27;Report-To&#x27;: &#x27;{&quot;endpoints&quot;:[{&quot;url&quot;:&quot;https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=FtHPLyD2a0xkULV4JG7J%2B9Byzdr8HpCM60rjz58yPz%2BGoAGgHNlP1GPMHzFK%2BBtKA7CVjxQVFEhMIkAy6RwNpH63v2PbnoXoIvElNqQQwO0d%2BKckdSSl9voZBDKVdpCYfoyXuDm856IF7Mop6QLJ&quot;}],&quot;group&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;NEL&#x27;: &#x27;{&quot;success_fraction&quot;:0,&quot;report_to&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;Server&#x27;: &#x27;cloudflare&#x27;, &#x27;CF-RAY&#x27;: &#x27;77a65aa29d0691ea-FRA&#x27;, &#x27;alt-svc&#x27;: &#x27;h3=&quot;:443&quot;; ma=86400, h3-29=&quot;:443&quot;; ma=86400&#x27;} 
+Response Body: [{&#x27;userId&#x27;: 1, &#x27;id&#x27;: 1, &#x27;title&#x27;: &#x27;sunt aut facere repellat provident occaecati excepturi optio reprehenderit&#x27;, &#x27;body&#x27;: &#x27;quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto&#x27;}, {&#x27;userId&#x27;: 1, &#x27;id&#x27;: 2, &#x27;title&#x27;: &#x27;qui est esse&#x27;, &#x27;body&#x27;: &#x27;est rerum tempore vitae\nsequi sint nihil reprehenderit dolor beatae ea dolores neque\nfugiat blanditiis voluptate porro vel nihil molestiae ut reiciendis\nqui aperiam non debitis possimus qui neque nisi nulla&#x27;}, {&#x27;userId&#x27;: 1, &#x27;id&#x27;: 3, &#x27;title&#x27;: &#x27;ea molestias quasi exercitationem repellat qui ipsa sit aut&#x27;, &#x27;body&#x27;: &#x27;et iusto sed quo iure\nvoluptatem occaecati omnis eligendi aut ad\nvoluptatem doloribus vel accusantium quis pariatur\nmolestiae porro eius odio et labore et velit aut&#x27;}, {&#x27;userId&#x27;: 1, &#x27;id&#x27;: 4, &#x27;title&#x27;: &#x27;eum et est occaecati&#x27;, &#x27;body&#x27;: &#x27;ullam et saepe reiciendis voluptatem adipisci\nsit amet autem assumenda provident rerum culpa\nquis hic commodi nesciunt rem tenetur doloremque ipsam iure\nquis sunt voluptatem rerum illo velit&#x27;}, {&#x27;userId&#x27;: 1, &#x27;id&#x27;: 5, &#x27;title&#x27;: &#x27;nesciunt quas odio&#x27;, &#x27;body&#x27;: &#x27;repudiandae veniam quaerat sunt sed\nalias aut fugiat sit autem sed est\nvoluptatem omnis possimus esse voluptatibus quis\nest aut tenetur dolor neque&#x27;}, {&#x27;userId&#x27;: 1, &#x27;id&#x27;: 6, &#x27;title&#x27;: &#x27;dolorem eum magni eos aperiam quia&#x27;, &#x27;body&#x27;: &#x27;ut aspernatur corporis harum nihil quis provident sequi\nmollitia nobis aliquid molestiae\nperspiciatis et ea nemo ab reprehenderit accusantium quas\nvoluptate dolores velit et doloremque molestiae&#x27;}, {&#x27;userId&#x27;: 1, &#x27;id&#x27;: 7, &#x27;title&#x27;: &#x27;magnam facilis autem&#x27;, &#x27;body&#x27;: &#x27;dolore placeat quibusdam ea quo vitae\nmagni quis enim qui quis quo nemo aut saepe\nquidem repellat excepturi ut quia\nsunt ut sequi eos ea sed quas&#x27;}, {&#x27;userId&#x27;: 1, &#x27;id&#x27;: 8, &#x27;title&#x27;: &#x27;dolorem dolore est ipsam&#x27;, &#x27;body&#x27;: &#x27;dignissimos aperiam dolorem qui eum\nfacilis quibusdam animi sint suscipit qui sint possimus cum\nquaerat magni maiores excepturi\nipsam ut commodi dolor voluptatum modi aut vitae&#x27;}, {&#x27;userId&#x27;: 1, &#x27;id&#x27;: 9, &#x27;title&#x27;: &#x27;nesciunt iure omnis dolorem tempora et accusantium&#x27;, &#x27;body&#x27;: &#x27;consectetur animi nesciunt iure dolore\nenim quia ad\nveniam autem ut quam aut nobis\net est aut quod aut provident voluptas autem voluptas&#x27;}, {&#x27;userId&#x27;: 1, &#x27;id&#x27;: 10, &#x27;title&#x27;: &#x27;optio molestias id quia eum&#x27;, &#x27;body&#x27;: &#x27;quo et expedita modi cum officia vel magni\ndoloribus qui repudiandae\nvero nisi sit\nquos veniam quod sed accusamus veritatis error&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 11, &#x27;title&#x27;: &#x27;et ea vero quia laudantium autem&#x27;, &#x27;body&#x27;: &#x27;delectus reiciendis molestiae occaecati non minima eveniet qui voluptatibus\naccusamus in eum beatae sit\nvel qui neque voluptates ut commodi qui incidunt\nut animi commodi&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 12, &#x27;title&#x27;: &#x27;in quibusdam tempore odit est dolorem&#x27;, &#x27;body&#x27;: &#x27;itaque id aut magnam\npraesentium quia et ea odit et ea voluptas et\nsapiente quia nihil amet occaecati quia id voluptatem\nincidunt ea est distinctio odio&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 13, &#x27;title&#x27;: &#x27;dolorum ut in voluptas mollitia et saepe quo animi&#x27;, &#x27;body&#x27;: &#x27;aut dicta possimus sint mollitia voluptas commodi quo doloremque\niste corrupti reiciendis voluptatem eius rerum\nsit cumque quod eligendi laborum minima\nperferendis recusandae assumenda consectetur porro architecto ipsum ipsam&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 14, &#x27;title&#x27;: &#x27;voluptatem eligendi optio&#x27;, &#x27;body&#x27;: &#x27;fuga et accusamus dolorum perferendis illo voluptas\nnon doloremque neque facere\nad qui dolorum molestiae beatae\nsed aut voluptas totam sit illum&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 15, &#x27;title&#x27;: &#x27;eveniet quod temporibus&#x27;, &#x27;body&#x27;: &#x27;reprehenderit quos placeat\nvelit minima officia dolores impedit repudiandae molestiae nam\nvoluptas recusandae quis delectus\nofficiis harum fugiat vitae&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 16, &#x27;title&#x27;: &#x27;sint suscipit perspiciatis velit dolorum rerum ipsa laboriosam odio&#x27;, &#x27;body&#x27;: &#x27;suscipit nam nisi quo aperiam aut\nasperiores eos fugit maiores voluptatibus quia\nvoluptatem quis ullam qui in alias quia est\nconsequatur magni mollitia accusamus ea nisi voluptate dicta&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 17, &#x27;title&#x27;: &#x27;fugit voluptas sed molestias voluptatem provident&#x27;, &#x27;body&#x27;: &#x27;eos voluptas et aut odit natus earum\naspernatur fuga molestiae ullam\ndeserunt ratione qui eos\nqui nihil ratione nemo velit ut aut id quo&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 18, &#x27;title&#x27;: &#x27;voluptate et itaque vero tempora molestiae&#x27;, &#x27;body&#x27;: &#x27;eveniet quo quis\nlaborum totam consequatur non dolor\nut et est repudiandae\nest voluptatem vel debitis et magnam&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 19, &#x27;title&#x27;: &#x27;adipisci placeat illum aut reiciendis qui&#x27;, &#x27;body&#x27;: &#x27;illum quis cupiditate provident sit magnam\nea sed aut omnis\nveniam maiores ullam consequatur atque\nadipisci quo iste expedita sit quos voluptas&#x27;}, {&#x27;userId&#x27;: 2, &#x27;id&#x27;: 20, &#x27;title&#x27;: &#x27;doloribus ad provident suscipit at&#x27;, &#x27;body&#x27;: &#x27;qui consequuntur ducimus possimus quisquam amet similique\nsuscipit porro ipsam amet\neos veritatis officiis exercitationem vel fugit aut necessitatibus totam\nomnis rerum consequatur expedita quidem cumque explicabo&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 21, &#x27;title&#x27;: &#x27;asperiores ea ipsam voluptatibus modi minima quia sint&#x27;, &#x27;body&#x27;: &#x27;repellat aliquid praesentium dolorem quo\nsed totam minus non itaque\nnihil labore molestiae sunt dolor eveniet hic recusandae veniam\ntempora et tenetur expedita sunt&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 22, &#x27;title&#x27;: &#x27;dolor sint quo a velit explicabo quia nam&#x27;, &#x27;body&#x27;: &#x27;eos qui et ipsum ipsam suscipit aut\nsed omnis non odio\nexpedita earum mollitia molestiae aut atque rem suscipit\nnam impedit esse&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 23, &#x27;title&#x27;: &#x27;maxime id vitae nihil numquam&#x27;, &#x27;body&#x27;: &#x27;veritatis unde neque eligendi\nquae quod architecto quo neque vitae\nest illo sit tempora doloremque fugit quod\net et vel beatae sequi ullam sed tenetur perspiciatis&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 24, &#x27;title&#x27;: &#x27;autem hic labore sunt dolores incidunt&#x27;, &#x27;body&#x27;: &#x27;enim et ex nulla\nomnis voluptas quia qui\nvoluptatem consequatur numquam aliquam sunt\ntotam recusandae id dignissimos aut sed asperiores deserunt&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 25, &#x27;title&#x27;: &#x27;rem alias distinctio quo quis&#x27;, &#x27;body&#x27;: &#x27;ullam consequatur ut\nomnis quis sit vel consequuntur\nipsa eligendi ipsum molestiae et omnis error nostrum\nmolestiae illo tempore quia et distinctio&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 26, &#x27;title&#x27;: &#x27;est et quae odit qui non&#x27;, &#x27;body&#x27;: &#x27;similique esse doloribus nihil accusamus\nomnis dolorem fuga consequuntur reprehenderit fugit recusandae temporibus\nperspiciatis cum ut laudantium\nomnis aut molestiae vel vero&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 27, &#x27;title&#x27;: &#x27;quasi id et eos tenetur aut quo autem&#x27;, &#x27;body&#x27;: &#x27;eum sed dolores ipsam sint possimus debitis occaecati\ndebitis qui qui et\nut placeat enim earum aut odit facilis\nconsequatur suscipit necessitatibus rerum sed inventore temporibus consequatur&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 28, &#x27;title&#x27;: &#x27;delectus ullam et corporis nulla voluptas sequi&#x27;, &#x27;body&#x27;: &#x27;non et quaerat ex quae ad maiores\nmaiores recusandae totam aut blanditiis mollitia quas illo\nut voluptatibus voluptatem\nsimilique nostrum eum&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 29, &#x27;title&#x27;: &#x27;iusto eius quod necessitatibus culpa ea&#x27;, &#x27;body&#x27;: &#x27;odit magnam ut saepe sed non qui\ntempora atque nihil\naccusamus illum doloribus illo dolor\neligendi repudiandae odit magni similique sed cum maiores&#x27;}, {&#x27;userId&#x27;: 3, &#x27;id&#x27;: 30, &#x27;title&#x27;: &#x27;a quo magni similique perferendis&#x27;, &#x27;body&#x27;: &#x27;alias dolor cumque\nimpedit blanditiis non eveniet odio maxime\nblanditiis amet eius quis tempora quia autem rem\na provident perspiciatis quia&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 31, &#x27;title&#x27;: &#x27;ullam ut quidem id aut vel consequuntur&#x27;, &#x27;body&#x27;: &#x27;debitis eius sed quibusdam non quis consectetur vitae\nimpedit ut qui consequatur sed aut in\nquidem sit nostrum et maiores adipisci atque\nquaerat voluptatem adipisci repudiandae&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 32, &#x27;title&#x27;: &#x27;doloremque illum aliquid sunt&#x27;, &#x27;body&#x27;: &#x27;deserunt eos nobis asperiores et hic\nest debitis repellat molestiae optio\nnihil ratione ut eos beatae quibusdam distinctio maiores\nearum voluptates et aut adipisci ea maiores voluptas maxime&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 33, &#x27;title&#x27;: &#x27;qui explicabo molestiae dolorem&#x27;, &#x27;body&#x27;: &#x27;rerum ut et numquam laborum odit est sit\nid qui sint in\nquasi tenetur tempore aperiam et quaerat qui in\nrerum officiis sequi cumque quod&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 34, &#x27;title&#x27;: &#x27;magnam ut rerum iure&#x27;, &#x27;body&#x27;: &#x27;ea velit perferendis earum ut voluptatem voluptate itaque iusto\ntotam pariatur in\nnemo voluptatem voluptatem autem magni tempora minima in\nest distinctio qui assumenda accusamus dignissimos officia nesciunt nobis&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 35, &#x27;title&#x27;: &#x27;id nihil consequatur molestias animi provident&#x27;, &#x27;body&#x27;: &#x27;nisi error delectus possimus ut eligendi vitae\nplaceat eos harum cupiditate facilis reprehenderit voluptatem beatae\nmodi ducimus quo illum voluptas eligendi\net nobis quia fugit&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 36, &#x27;title&#x27;: &#x27;fuga nam accusamus voluptas reiciendis itaque&#x27;, &#x27;body&#x27;: &#x27;ad mollitia et omnis minus architecto odit\nvoluptas doloremque maxime aut non ipsa qui alias veniam\nblanditiis culpa aut quia nihil cumque facere et occaecati\nqui aspernatur quia eaque ut aperiam inventore&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 37, &#x27;title&#x27;: &#x27;provident vel ut sit ratione est&#x27;, &#x27;body&#x27;: &#x27;debitis et eaque non officia sed nesciunt pariatur vel\nvoluptatem iste vero et ea\nnumquam aut expedita ipsum nulla in\nvoluptates omnis consequatur aut enim officiis in quam qui&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 38, &#x27;title&#x27;: &#x27;explicabo et eos deleniti nostrum ab id repellendus&#x27;, &#x27;body&#x27;: &#x27;animi esse sit aut sit nesciunt assumenda eum voluptas\nquia voluptatibus provident quia necessitatibus ea\nrerum repudiandae quia voluptatem delectus fugit aut id quia\nratione optio eos iusto veniam iure&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 39, &#x27;title&#x27;: &#x27;eos dolorem iste accusantium est eaque quam&#x27;, &#x27;body&#x27;: &#x27;corporis rerum ducimus vel eum accusantium\nmaxime aspernatur a porro possimus iste omnis\nest in deleniti asperiores fuga aut\nvoluptas sapiente vel dolore minus voluptatem incidunt ex&#x27;}, {&#x27;userId&#x27;: 4, &#x27;id&#x27;: 40, &#x27;title&#x27;: &#x27;enim quo cumque&#x27;, &#x27;body&#x27;: &#x27;ut voluptatum aliquid illo tenetur nemo sequi quo facilis\nipsum rem optio mollitia quas\nvoluptatem eum voluptas qui\nunde omnis voluptatem iure quasi maxime voluptas nam&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 41, &#x27;title&#x27;: &#x27;non est facere&#x27;, &#x27;body&#x27;: &#x27;molestias id nostrum\nexcepturi molestiae dolore omnis repellendus quaerat saepe\nconsectetur iste quaerat tenetur asperiores accusamus ex ut\nnam quidem est ducimus sunt debitis saepe&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 42, &#x27;title&#x27;: &#x27;commodi ullam sint et excepturi error explicabo praesentium voluptas&#x27;, &#x27;body&#x27;: &#x27;odio fugit voluptatum ducimus earum autem est incidunt voluptatem\nodit reiciendis aliquam sunt sequi nulla dolorem\nnon facere repellendus voluptates quia\nratione harum vitae ut&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 43, &#x27;title&#x27;: &#x27;eligendi iste nostrum consequuntur adipisci praesentium sit beatae perferendis&#x27;, &#x27;body&#x27;: &#x27;similique fugit est\nillum et dolorum harum et voluptate eaque quidem\nexercitationem quos nam commodi possimus cum odio nihil nulla\ndolorum exercitationem magnam ex et a et distinctio debitis&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 44, &#x27;title&#x27;: &#x27;optio dolor molestias sit&#x27;, &#x27;body&#x27;: &#x27;temporibus est consectetur dolore\net libero debitis vel velit laboriosam quia\nipsum quibusdam qui itaque fuga rem aut\nea et iure quam sed maxime ut distinctio quae&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 45, &#x27;title&#x27;: &#x27;ut numquam possimus omnis eius suscipit laudantium iure&#x27;, &#x27;body&#x27;: &#x27;est natus reiciendis nihil possimus aut provident\nex et dolor\nrepellat pariatur est\nnobis rerum repellendus dolorem autem&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 46, &#x27;title&#x27;: &#x27;aut quo modi neque nostrum ducimus&#x27;, &#x27;body&#x27;: &#x27;voluptatem quisquam iste\nvoluptatibus natus officiis facilis dolorem\nquis quas ipsam\nvel et voluptatum in aliquid&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 47, &#x27;title&#x27;: &#x27;quibusdam cumque rem aut deserunt&#x27;, &#x27;body&#x27;: &#x27;voluptatem assumenda ut qui ut cupiditate aut impedit veniam\noccaecati nemo illum voluptatem laudantium\nmolestiae beatae rerum ea iure soluta nostrum\neligendi et voluptate&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 48, &#x27;title&#x27;: &#x27;ut voluptatem illum ea doloribus itaque eos&#x27;, &#x27;body&#x27;: &#x27;voluptates quo voluptatem facilis iure occaecati\nvel assumenda rerum officia et\nillum perspiciatis ab deleniti\nlaudantium repellat ad ut et autem reprehenderit&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 49, &#x27;title&#x27;: &#x27;laborum non sunt aut ut assumenda perspiciatis voluptas&#x27;, &#x27;body&#x27;: &#x27;inventore ab sint\nnatus fugit id nulla sequi architecto nihil quaerat\neos tenetur in in eum veritatis non\nquibusdam officiis aspernatur cumque aut commodi aut&#x27;}, {&#x27;userId&#x27;: 5, &#x27;id&#x27;: 50, &#x27;title&#x27;: &#x27;repellendus qui recusandae incidunt voluptates tenetur qui omnis exercitationem&#x27;, &#x27;body&#x27;: &#x27;error suscipit maxime adipisci consequuntur recusandae\nvoluptas eligendi et est et voluptates\nquia distinctio ab amet quaerat molestiae et vitae\nadipisci impedit sequi nesciunt quis consectetur&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 51, &#x27;title&#x27;: &#x27;soluta aliquam aperiam consequatur illo quis voluptas&#x27;, &#x27;body&#x27;: &#x27;sunt dolores aut doloribus\ndolore doloribus voluptates tempora et\ndoloremque et quo\ncum asperiores sit consectetur dolorem&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 52, &#x27;title&#x27;: &#x27;qui enim et consequuntur quia animi quis voluptate quibusdam&#x27;, &#x27;body&#x27;: &#x27;iusto est quibusdam fuga quas quaerat molestias\na enim ut sit accusamus enim\ntemporibus iusto accusantium provident architecto\nsoluta esse reprehenderit qui laborum&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 53, &#x27;title&#x27;: &#x27;ut quo aut ducimus alias&#x27;, &#x27;body&#x27;: &#x27;minima harum praesentium eum rerum illo dolore\nquasi exercitationem rerum nam\nporro quis neque quo\nconsequatur minus dolor quidem veritatis sunt non explicabo similique&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 54, &#x27;title&#x27;: &#x27;sit asperiores ipsam eveniet odio non quia&#x27;, &#x27;body&#x27;: &#x27;totam corporis dignissimos\nvitae dolorem ut occaecati accusamus\nex velit deserunt\net exercitationem vero incidunt corrupti mollitia&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 55, &#x27;title&#x27;: &#x27;sit vel voluptatem et non libero&#x27;, &#x27;body&#x27;: &#x27;debitis excepturi ea perferendis harum libero optio\neos accusamus cum fuga ut sapiente repudiandae\net ut incidunt omnis molestiae\nnihil ut eum odit&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 56, &#x27;title&#x27;: &#x27;qui et at rerum necessitatibus&#x27;, &#x27;body&#x27;: &#x27;aut est omnis dolores\nneque rerum quod ea rerum velit pariatur beatae excepturi\net provident voluptas corrupti\ncorporis harum reprehenderit dolores eligendi&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 57, &#x27;title&#x27;: &#x27;sed ab est est&#x27;, &#x27;body&#x27;: &#x27;at pariatur consequuntur earum quidem\nquo est laudantium soluta voluptatem\nqui ullam et est\net cum voluptas voluptatum repellat est&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 58, &#x27;title&#x27;: &#x27;voluptatum itaque dolores nisi et quasi&#x27;, &#x27;body&#x27;: &#x27;veniam voluptatum quae adipisci id\net id quia eos ad et dolorem\naliquam quo nisi sunt eos impedit error\nad similique veniam&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 59, &#x27;title&#x27;: &#x27;qui commodi dolor at maiores et quis id accusantium&#x27;, &#x27;body&#x27;: &#x27;perspiciatis et quam ea autem temporibus non voluptatibus qui\nbeatae a earum officia nesciunt dolores suscipit voluptas et\nanimi doloribus cum rerum quas et magni\net hic ut ut commodi expedita sunt&#x27;}, {&#x27;userId&#x27;: 6, &#x27;id&#x27;: 60, &#x27;title&#x27;: &#x27;consequatur placeat omnis quisquam quia reprehenderit fugit veritatis facere&#x27;, &#x27;body&#x27;: &#x27;asperiores sunt ab assumenda cumque modi velit\nqui esse omnis\nvoluptate et fuga perferendis voluptas\nillo ratione amet aut et omnis&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 61, &#x27;title&#x27;: &#x27;voluptatem doloribus consectetur est ut ducimus&#x27;, &#x27;body&#x27;: &#x27;ab nemo optio odio\ndelectus tenetur corporis similique nobis repellendus rerum omnis facilis\nvero blanditiis debitis in nesciunt doloribus dicta dolores\nmagnam minus velit&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 62, &#x27;title&#x27;: &#x27;beatae enim quia vel&#x27;, &#x27;body&#x27;: &#x27;enim aspernatur illo distinctio quae praesentium\nbeatae alias amet delectus qui voluptate distinctio\nodit sint accusantium autem omnis\nquo molestiae omnis ea eveniet optio&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 63, &#x27;title&#x27;: &#x27;voluptas blanditiis repellendus animi ducimus error sapiente et suscipit&#x27;, &#x27;body&#x27;: &#x27;enim adipisci aspernatur nemo\nnumquam omnis facere dolorem dolor ex quis temporibus incidunt\nab delectus culpa quo reprehenderit blanditiis asperiores\naccusantium ut quam in voluptatibus voluptas ipsam dicta&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 64, &#x27;title&#x27;: &#x27;et fugit quas eum in in aperiam quod&#x27;, &#x27;body&#x27;: &#x27;id velit blanditiis\neum ea voluptatem\nmolestiae sint occaecati est eos perspiciatis\nincidunt a error provident eaque aut aut qui&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 65, &#x27;title&#x27;: &#x27;consequatur id enim sunt et et&#x27;, &#x27;body&#x27;: &#x27;voluptatibus ex esse\nsint explicabo est aliquid cumque adipisci fuga repellat labore\nmolestiae corrupti ex saepe at asperiores et perferendis\nnatus id esse incidunt pariatur&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 66, &#x27;title&#x27;: &#x27;repudiandae ea animi iusto&#x27;, &#x27;body&#x27;: &#x27;officia veritatis tenetur vero qui itaque\nsint non ratione\nsed et ut asperiores iusto eos molestiae nostrum\nveritatis quibusdam et nemo iusto saepe&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 67, &#x27;title&#x27;: &#x27;aliquid eos sed fuga est maxime repellendus&#x27;, &#x27;body&#x27;: &#x27;reprehenderit id nostrum\nvoluptas doloremque pariatur sint et accusantium quia quod aspernatur\net fugiat amet\nnon sapiente et consequatur necessitatibus molestiae&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 68, &#x27;title&#x27;: &#x27;odio quis facere architecto reiciendis optio&#x27;, &#x27;body&#x27;: &#x27;magnam molestiae perferendis quisquam\nqui cum reiciendis\nquaerat animi amet hic inventore\nea quia deleniti quidem saepe porro velit&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 69, &#x27;title&#x27;: &#x27;fugiat quod pariatur odit minima&#x27;, &#x27;body&#x27;: &#x27;officiis error culpa consequatur modi asperiores et\ndolorum assumenda voluptas et vel qui aut vel rerum\nvoluptatum quisquam perspiciatis quia rerum consequatur totam quas\nsequi commodi repudiandae asperiores et saepe a&#x27;}, {&#x27;userId&#x27;: 7, &#x27;id&#x27;: 70, &#x27;title&#x27;: &#x27;voluptatem laborum magni&#x27;, &#x27;body&#x27;: &#x27;sunt repellendus quae\nest asperiores aut deleniti esse accusamus repellendus quia aut\nquia dolorem unde\neum tempora esse dolore&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 71, &#x27;title&#x27;: &#x27;et iusto veniam et illum aut fuga&#x27;, &#x27;body&#x27;: &#x27;occaecati a doloribus\niste saepe consectetur placeat eum voluptate dolorem et\nqui quo quia voluptas\nrerum ut id enim velit est perferendis&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 72, &#x27;title&#x27;: &#x27;sint hic doloribus consequatur eos non id&#x27;, &#x27;body&#x27;: &#x27;quam occaecati qui deleniti consectetur\nconsequatur aut facere quas exercitationem aliquam hic voluptas\nneque id sunt ut aut accusamus\nsunt consectetur expedita inventore velit&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 73, &#x27;title&#x27;: &#x27;consequuntur deleniti eos quia temporibus ab aliquid at&#x27;, &#x27;body&#x27;: &#x27;voluptatem cumque tenetur consequatur expedita ipsum nemo quia explicabo\naut eum minima consequatur\ntempore cumque quae est et\net in consequuntur voluptatem voluptates aut&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 74, &#x27;title&#x27;: &#x27;enim unde ratione doloribus quas enim ut sit sapiente&#x27;, &#x27;body&#x27;: &#x27;odit qui et et necessitatibus sint veniam\nmollitia amet doloremque molestiae commodi similique magnam et quam\nblanditiis est itaque\nquo et tenetur ratione occaecati molestiae tempora&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 75, &#x27;title&#x27;: &#x27;dignissimos eum dolor ut enim et delectus in&#x27;, &#x27;body&#x27;: &#x27;commodi non non omnis et voluptas sit\nautem aut nobis magnam et sapiente voluptatem\net laborum repellat qui delectus facilis temporibus\nrerum amet et nemo voluptate expedita adipisci error dolorem&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 76, &#x27;title&#x27;: &#x27;doloremque officiis ad et non perferendis&#x27;, &#x27;body&#x27;: &#x27;ut animi facere\ntotam iusto tempore\nmolestiae eum aut et dolorem aperiam\nquaerat recusandae totam odio&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 77, &#x27;title&#x27;: &#x27;necessitatibus quasi exercitationem odio&#x27;, &#x27;body&#x27;: &#x27;modi ut in nulla repudiandae dolorum nostrum eos\naut consequatur omnis\nut incidunt est omnis iste et quam\nvoluptates sapiente aliquam asperiores nobis amet corrupti repudiandae provident&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 78, &#x27;title&#x27;: &#x27;quam voluptatibus rerum veritatis&#x27;, &#x27;body&#x27;: &#x27;nobis facilis odit tempore cupiditate quia\nassumenda doloribus rerum qui ea\nillum et qui totam\naut veniam repellendus&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 79, &#x27;title&#x27;: &#x27;pariatur consequatur quia magnam autem omnis non amet&#x27;, &#x27;body&#x27;: &#x27;libero accusantium et et facere incidunt sit dolorem\nnon excepturi qui quia sed laudantium\nquisquam molestiae ducimus est\nofficiis esse molestiae iste et quos&#x27;}, {&#x27;userId&#x27;: 8, &#x27;id&#x27;: 80, &#x27;title&#x27;: &#x27;labore in ex et explicabo corporis aut quas&#x27;, &#x27;body&#x27;: &#x27;ex quod dolorem ea eum iure qui provident amet\nquia qui facere excepturi et repudiandae\nasperiores molestias provident\nminus incidunt vero fugit rerum sint sunt excepturi provident&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 81, &#x27;title&#x27;: &#x27;tempora rem veritatis voluptas quo dolores vero&#x27;, &#x27;body&#x27;: &#x27;facere qui nesciunt est voluptatum voluptatem nisi\nsequi eligendi necessitatibus ea at rerum itaque\nharum non ratione velit laboriosam quis consequuntur\nex officiis minima doloremque voluptas ut aut&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 82, &#x27;title&#x27;: &#x27;laudantium voluptate suscipit sunt enim enim&#x27;, &#x27;body&#x27;: &#x27;ut libero sit aut totam inventore sunt\nporro sint qui sunt molestiae\nconsequatur cupiditate qui iste ducimus adipisci\ndolor enim assumenda soluta laboriosam amet iste delectus hic&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 83, &#x27;title&#x27;: &#x27;odit et voluptates doloribus alias odio et&#x27;, &#x27;body&#x27;: &#x27;est molestiae facilis quis tempora numquam nihil qui\nvoluptate sapiente consequatur est qui\nnecessitatibus autem aut ipsa aperiam modi dolore numquam\nreprehenderit eius rem quibusdam&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 84, &#x27;title&#x27;: &#x27;optio ipsam molestias necessitatibus occaecati facilis veritatis dolores aut&#x27;, &#x27;body&#x27;: &#x27;sint molestiae magni a et quos\neaque et quasi\nut rerum debitis similique veniam\nrecusandae dignissimos dolor incidunt consequatur odio&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 85, &#x27;title&#x27;: &#x27;dolore veritatis porro provident adipisci blanditiis et sunt&#x27;, &#x27;body&#x27;: &#x27;similique sed nisi voluptas iusto omnis\nmollitia et quo\nassumenda suscipit officia magnam sint sed tempora\nenim provident pariatur praesentium atque animi amet ratione&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 86, &#x27;title&#x27;: &#x27;placeat quia et porro iste&#x27;, &#x27;body&#x27;: &#x27;quasi excepturi consequatur iste autem temporibus sed molestiae beatae\net quaerat et esse ut\nvoluptatem occaecati et vel explicabo autem\nasperiores pariatur deserunt optio&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 87, &#x27;title&#x27;: &#x27;nostrum quis quasi placeat&#x27;, &#x27;body&#x27;: &#x27;eos et molestiae\nnesciunt ut a\ndolores perspiciatis repellendus repellat aliquid\nmagnam sint rem ipsum est&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 88, &#x27;title&#x27;: &#x27;sapiente omnis fugit eos&#x27;, &#x27;body&#x27;: &#x27;consequatur omnis est praesentium\nducimus non iste\nneque hic deserunt\nvoluptatibus veniam cum et rerum sed&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 89, &#x27;title&#x27;: &#x27;sint soluta et vel magnam aut ut sed qui&#x27;, &#x27;body&#x27;: &#x27;repellat aut aperiam totam temporibus autem et\narchitecto magnam ut\nconsequatur qui cupiditate rerum quia soluta dignissimos nihil iure\ntempore quas est&#x27;}, {&#x27;userId&#x27;: 9, &#x27;id&#x27;: 90, &#x27;title&#x27;: &#x27;ad iusto omnis odit dolor voluptatibus&#x27;, &#x27;body&#x27;: &#x27;minus omnis soluta quia\nqui sed adipisci voluptates illum ipsam voluptatem\neligendi officia ut in\neos soluta similique molestias praesentium blanditiis&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 91, &#x27;title&#x27;: &#x27;aut amet sed&#x27;, &#x27;body&#x27;: &#x27;libero voluptate eveniet aperiam sed\nsunt placeat suscipit molestias\nsimilique fugit nam natus\nexpedita consequatur consequatur dolores quia eos et placeat&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 92, &#x27;title&#x27;: &#x27;ratione ex tenetur perferendis&#x27;, &#x27;body&#x27;: &#x27;aut et excepturi dicta laudantium sint rerum nihil\nlaudantium et at\na neque minima officia et similique libero et\ncommodi voluptate qui&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 93, &#x27;title&#x27;: &#x27;beatae soluta recusandae&#x27;, &#x27;body&#x27;: &#x27;dolorem quibusdam ducimus consequuntur dicta aut quo laboriosam\nvoluptatem quis enim recusandae ut sed sunt\nnostrum est odit totam\nsit error sed sunt eveniet provident qui nulla&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 94, &#x27;title&#x27;: &#x27;qui qui voluptates illo iste minima&#x27;, &#x27;body&#x27;: &#x27;aspernatur expedita soluta quo ab ut similique\nexpedita dolores amet\nsed temporibus distinctio magnam saepe deleniti\nomnis facilis nam ipsum natus sint similique omnis&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 95, &#x27;title&#x27;: &#x27;id minus libero illum nam ad officiis&#x27;, &#x27;body&#x27;: &#x27;earum voluptatem facere provident blanditiis velit laboriosam\npariatur accusamus odio saepe\ncumque dolor qui a dicta ab doloribus consequatur omnis\ncorporis cupiditate eaque assumenda ad nesciunt&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 96, &#x27;title&#x27;: &#x27;quaerat velit veniam amet cupiditate aut numquam ut sequi&#x27;, &#x27;body&#x27;: &#x27;in non odio excepturi sint eum\nlabore voluptates vitae quia qui et\ninventore itaque rerum\nveniam non exercitationem delectus aut&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 97, &#x27;title&#x27;: &#x27;quas fugiat ut perspiciatis vero provident&#x27;, &#x27;body&#x27;: &#x27;eum non blanditiis soluta porro quibusdam voluptas\nvel voluptatem qui placeat dolores qui velit aut\nvel inventore aut cumque culpa explicabo aliquid at\nperspiciatis est et voluptatem dignissimos dolor itaque sit nam&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 98, &#x27;title&#x27;: &#x27;laboriosam dolor voluptates&#x27;, &#x27;body&#x27;: &#x27;doloremque ex facilis sit sint culpa\nsoluta assumenda eligendi non ut eius\nsequi ducimus vel quasi\nveritatis est dolores&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 99, &#x27;title&#x27;: &#x27;temporibus sit alias delectus eligendi possimus magni&#x27;, &#x27;body&#x27;: &#x27;quo deleniti praesentium dicta non quod\naut est molestias\nmolestias et officia quis nihil\nitaque dolorem quia&#x27;}, {&#x27;userId&#x27;: 10, &#x27;id&#x27;: 100, &#x27;title&#x27;: &#x27;at nam consequatur ea labore ea harum&#x27;, &#x27;body&#x27;: &#x27;cupiditate quo est a modi nesciunt soluta\nipsa voluptas error itaque dicta in\nautem qui minus magnam et distinctio eum\naccusamus ratione error aut&#x27;}] 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">step_definitions/test_sample.py::test_update_route[put_payload_1.json]</td>
+          <td class="col-duration">0.66</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Request Method: PUT 
+Request URI: http://jsonplaceholder.typicode.com/posts/1 
+Request Header: {&#x27;Content-type&#x27;: &#x27;application/json; charset=UTF-8&#x27;} 
+Request Body: {&#x27;id&#x27;: 1, &#x27;title&#x27;: &#x27;abc&#x27;, &#x27;body&#x27;: &#x27;xyz&#x27;, &#x27;userId&#x27;: 1} 
+Response Status Code: 200 
+Response Header Fields: {&#x27;Date&#x27;: &#x27;Fri, 16 Dec 2022 09:22:21 GMT&#x27;, &#x27;Content-Type&#x27;: &#x27;application/json; charset=utf-8&#x27;, &#x27;Transfer-Encoding&#x27;: &#x27;chunked&#x27;, &#x27;Connection&#x27;: &#x27;keep-alive&#x27;, &#x27;X-Powered-By&#x27;: &#x27;Express&#x27;, &#x27;X-Ratelimit-Limit&#x27;: &#x27;1000&#x27;, &#x27;X-Ratelimit-Remaining&#x27;: &#x27;997&#x27;, &#x27;X-Ratelimit-Reset&#x27;: &#x27;1671182572&#x27;, &#x27;Vary&#x27;: &#x27;Origin, Accept-Encoding&#x27;, &#x27;Access-Control-Allow-Credentials&#x27;: &#x27;true&#x27;, &#x27;Cache-Control&#x27;: &#x27;no-cache&#x27;, &#x27;Pragma&#x27;: &#x27;no-cache&#x27;, &#x27;Expires&#x27;: &#x27;-1&#x27;, &#x27;X-Content-Type-Options&#x27;: &#x27;nosniff&#x27;, &#x27;Etag&#x27;: &#x27;W/&quot;3f-/E4tLhCKcICzHZZWDfwwQTy/Slc&quot;&#x27;, &#x27;Via&#x27;: &#x27;1.1 vegur&#x27;, &#x27;CF-Cache-Status&#x27;: &#x27;DYNAMIC&#x27;, &#x27;Server-Timing&#x27;: &#x27;cf-q-config;dur=4.9999998736894e-06&#x27;, &#x27;Report-To&#x27;: &#x27;{&quot;endpoints&quot;:[{&quot;url&quot;:&quot;https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=bSuxdH1goxnpHHH8run4DI%2BFUoOMeQpP6P%2Ba83kMByh1sBXMQxW%2FcTP0oguproXnmqaVhPdbjAdYXT4w1aB0rpHEKXX8kIXxbUUAmJtK45s6Xc06ZXlaFuD9sqCZAlZZWwybGzQixGsWVsCm1LvA&quot;}],&quot;group&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;NEL&#x27;: &#x27;{&quot;success_fraction&quot;:0,&quot;report_to&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;Server&#x27;: &#x27;cloudflare&#x27;, &#x27;CF-RAY&#x27;: &#x27;77a65aa529989116-FRA&#x27;, &#x27;Content-Encoding&#x27;: &#x27;gzip&#x27;, &#x27;alt-svc&#x27;: &#x27;h3=&quot;:443&quot;; ma=86400, h3-29=&quot;:443&quot;; ma=86400&#x27;} 
+Response Body: {&#x27;id&#x27;: 1, &#x27;title&#x27;: &#x27;abc&#x27;, &#x27;body&#x27;: &#x27;xyz&#x27;, &#x27;userId&#x27;: 1} 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">step_definitions/test_sample.py::test_update_route[put_payload_2.json]</td>
+          <td class="col-duration">0.64</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Request Method: PUT 
+Request URI: http://jsonplaceholder.typicode.com/posts/1 
+Request Header: {&#x27;Content-type&#x27;: &#x27;application/json; charset=UTF-8&#x27;} 
+Request Body: {&#x27;id&#x27;: 1, &#x27;title&#x27;: &#x27;testing&#x27;, &#x27;body&#x27;: &#x27;testing&#x27;, &#x27;userId&#x27;: 1} 
+Response Status Code: 200 
+Response Header Fields: {&#x27;Date&#x27;: &#x27;Fri, 16 Dec 2022 09:22:22 GMT&#x27;, &#x27;Content-Type&#x27;: &#x27;application/json; charset=utf-8&#x27;, &#x27;Transfer-Encoding&#x27;: &#x27;chunked&#x27;, &#x27;Connection&#x27;: &#x27;keep-alive&#x27;, &#x27;X-Powered-By&#x27;: &#x27;Express&#x27;, &#x27;X-Ratelimit-Limit&#x27;: &#x27;1000&#x27;, &#x27;X-Ratelimit-Remaining&#x27;: &#x27;996&#x27;, &#x27;X-Ratelimit-Reset&#x27;: &#x27;1671182572&#x27;, &#x27;Vary&#x27;: &#x27;Origin, Accept-Encoding&#x27;, &#x27;Access-Control-Allow-Credentials&#x27;: &#x27;true&#x27;, &#x27;Cache-Control&#x27;: &#x27;no-cache&#x27;, &#x27;Pragma&#x27;: &#x27;no-cache&#x27;, &#x27;Expires&#x27;: &#x27;-1&#x27;, &#x27;X-Content-Type-Options&#x27;: &#x27;nosniff&#x27;, &#x27;Etag&#x27;: &#x27;W/&quot;47-UzR4jYNDwb6R2jnqncsLRxStjvQ&quot;&#x27;, &#x27;Via&#x27;: &#x27;1.1 vegur&#x27;, &#x27;CF-Cache-Status&#x27;: &#x27;DYNAMIC&#x27;, &#x27;Server-Timing&#x27;: &#x27;cf-q-config;dur=4.000001354143e-06&#x27;, &#x27;Report-To&#x27;: &#x27;{&quot;endpoints&quot;:[{&quot;url&quot;:&quot;https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=hCwt%2BzhNNSPyLpgfnU9CQVX83PSb1WGBUDX2yxePUfjXaPdLnm4Bjo%2FpdBmE7m825vkozbm%2FeXXDoF%2Fl2GsSR5lVUVJ8KyNlNsElincmqRa3iNdqCQK2iMbpDo9K5l3h2skf2yz96%2BEHesSZ9CG6&quot;}],&quot;group&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;NEL&#x27;: &#x27;{&quot;success_fraction&quot;:0,&quot;report_to&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;Server&#x27;: &#x27;cloudflare&#x27;, &#x27;CF-RAY&#x27;: &#x27;77a65aa9296e994b-FRA&#x27;, &#x27;Content-Encoding&#x27;: &#x27;gzip&#x27;, &#x27;alt-svc&#x27;: &#x27;h3=&quot;:443&quot;; ma=86400, h3-29=&quot;:443&quot;; ma=86400&#x27;} 
+Response Body: {&#x27;id&#x27;: 1, &#x27;title&#x27;: &#x27;testing&#x27;, &#x27;body&#x27;: &#x27;testing&#x27;, &#x27;userId&#x27;: 1} 
+
+<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">step_definitions/test_sample.py::test_delete_route</td>
+          <td class="col-duration">0.63</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Request Method: DELETE 
+Request URI: http://jsonplaceholder.typicode.com/posts/1 
+Request Header: {&#x27;Content-type&#x27;: &#x27;application/json; charset=UTF-8&#x27;} 
+Response Status Code: 200 
+Response Header Fields: {&#x27;Date&#x27;: &#x27;Fri, 16 Dec 2022 09:22:23 GMT&#x27;, &#x27;Content-Type&#x27;: &#x27;application/json; charset=utf-8&#x27;, &#x27;Content-Length&#x27;: &#x27;2&#x27;, &#x27;Connection&#x27;: &#x27;keep-alive&#x27;, &#x27;X-Powered-By&#x27;: &#x27;Express&#x27;, &#x27;X-Ratelimit-Limit&#x27;: &#x27;1000&#x27;, &#x27;X-Ratelimit-Remaining&#x27;: &#x27;995&#x27;, &#x27;X-Ratelimit-Reset&#x27;: &#x27;1671182572&#x27;, &#x27;Vary&#x27;: &#x27;Origin, Accept-Encoding&#x27;, &#x27;Access-Control-Allow-Credentials&#x27;: &#x27;true&#x27;, &#x27;Cache-Control&#x27;: &#x27;no-cache&#x27;, &#x27;Pragma&#x27;: &#x27;no-cache&#x27;, &#x27;Expires&#x27;: &#x27;-1&#x27;, &#x27;X-Content-Type-Options&#x27;: &#x27;nosniff&#x27;, &#x27;Etag&#x27;: &#x27;W/&quot;2-vyGp6PvFo4RvsFtPoIWeCReyIC8&quot;&#x27;, &#x27;Via&#x27;: &#x27;1.1 vegur&#x27;, &#x27;CF-Cache-Status&#x27;: &#x27;DYNAMIC&#x27;, &#x27;Server-Timing&#x27;: &#x27;cf-q-config;dur=4.9999998736894e-06&#x27;, &#x27;Report-To&#x27;: &#x27;{&quot;endpoints&quot;:[{&quot;url&quot;:&quot;https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=P4E%2Bx8lMb8ENrPECCxnf6jDB1unM7pF%2BkV3Vp7R7qyj%2FkrHeHbDDTU8Lb%2FkH%2Fw72JpfwhP7Xx4Qr%2BzZcfx4qiyfWWKJqfpDQDPscXY3C1OgI%2F%2BAIvtU0aD1iJTAwizlWAmO%2FcV3EmTAZ4IbjRCDh&quot;}],&quot;group&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;NEL&#x27;: &#x27;{&quot;success_fraction&quot;:0,&quot;report_to&quot;:&quot;cf-nel&quot;,&quot;max_age&quot;:604800}&#x27;, &#x27;Server&#x27;: &#x27;cloudflare&#x27;, &#x27;CF-RAY&#x27;: &#x27;77a65aad5c179b28-FRA&#x27;, &#x27;alt-svc&#x27;: &#x27;h3=&quot;:443&quot;; ma=86400, h3-29=&quot;:443&quot;; ma=86400&#x27;} 
+Response Body: {} 
+
+<br/></div></td></tr></tbody></table></body></html>

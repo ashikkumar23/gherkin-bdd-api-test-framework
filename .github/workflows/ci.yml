@@ -1,33 +1,64 @@
+# The name of the workflow as it will appear in the "Actions" tab of the GitHub repository
 name: Run tests
+
+# Specifies the trigger for this workflow
 on:
+  # Allows you to run this workflow manually from the "Actions" tab of the GitHub repository
   workflow_dispatch:
     inputs:
       tags:
         description: Test scenario tags
         required: true
         default: smoke
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  # This workflow contains a single job called "run_automated_tests"
   run_automated_tests:
+    # Configures the job to run on the latest version of an Ubuntu Linux runner
     runs-on: ubuntu-latest
+
+    # Set the default shell and working directory
     defaults:
       run:
+        shell: bash
         working-directory: ./tests
+
+    # "steps" represent a sequence of tasks that will be executed as part of the job
     steps:
+      # This action checks-out your repository under $GITHUB_WORKSPACE, so your workflow can access it
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      # Set up GitHub Actions workflow with a specific version of Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.8
+
+      # Setup dependencies by running requirements.txt
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install -r requirements.txt --use-pep517
+          python3 -m pip install -r requirements.txt --use-pep517
+
+      # GitHub Action to read .env file and add variables to GITHUB_ENV
       - name: Load .env file
         uses: xom9ikk/dotenv@v2
         with:
           path: ./tests/
+
+      # Execute tests
       - name: Run tests
         run: >
-          pytest -v --gherkin-terminal-reporter --reruns 1 --reruns-delay 1
-          --tags="${{ github.event.inputs.tags }}" -s --color=yes
+          python3 -m pytest -v --gherkin-terminal-reporter --reruns 1 --reruns-delay 1
+          --tags="${{ github.event.inputs.tags }}" -s --color=yes --html=test_report.html --self-contained-html
+
+      # Upload html result as artifact
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-results
+          path: |
+            ./tests/output/reports/
+        if: ${{ always() }}
