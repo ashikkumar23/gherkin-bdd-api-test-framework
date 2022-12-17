@@ -60,5 +60,5 @@ jobs:
         with:
           name: pytest-results
           path: |
-            output/reports/
+            ./tests/output/reports/
         if: ${{ always() }}
