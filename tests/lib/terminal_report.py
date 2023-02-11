@@ -21,7 +21,7 @@ def _custom_short_summary(terminalreporter: TerminalReporter):
     write_sep = terminalreporter.write_sep
     write = terminalreporter.write
 
-    write_sep("=", "Report Summary", red=failed, green=(not failed), bold=True)
+    write_sep("=", "Test Report Summary", red=failed, green=(not failed), bold=True)
 
     write(f"Total Test Duration: {total_duration:.2f} seconds", bold=True)
     write(f"\nTotal Tests Collected: {total_count}", bold=True)
@@ -33,7 +33,7 @@ def _custom_short_summary(terminalreporter: TerminalReporter):
     for failed_test in failed_cases:
         write(f"\tFailed test: {failed_test.nodeid}\n", yellow=True)
 
-    write_sep("=", "End of Report Summary", red=failed, green=(not failed), bold=True)
+    write_sep("=", "End of Test Report Summary", red=failed, green=(not failed), bold=True)
 
 
 @pytest.hookimpl(hookwrapper=True)
