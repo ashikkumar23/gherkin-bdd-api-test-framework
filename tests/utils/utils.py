@@ -1,6 +1,6 @@
 import json
-from typing import Dict
 from pathlib import Path
+from typing import Dict
 
 import pytest
 import requests
@@ -31,10 +31,9 @@ def get_file_path(file_name: str) -> Path:
 
 
 def make_request(
-    method: str, headers: Dict = None, payload: Dict = None
+        method: str, api_endpoint: str, headers: Dict = None, payload: Dict = None
 ) -> requests.Response:
     """Make a request using the given method and log the request & response details."""
-    api_endpoint = pytest.globalDict["api_endpoint"]
     response = session.request(method, api_endpoint, headers=headers, json=payload)
     log_details = "\n".join(
         [
@@ -51,21 +50,29 @@ def make_request(
     return response
 
 
-def get_request(headers: Dict = None) -> requests.Response:
+def get_request(api_endpoint: str = None, headers: Dict = None) -> requests.Response:
     """Make a GET request."""
-    return make_request("GET", headers=headers)
+    return make_request("GET", api_endpoint=api_endpoint, headers=headers)
 
 
-def post_request(headers: Dict = None, payload: Dict = None) -> requests.Response:
+def post_request(
+        api_endpoint: str = None, headers: Dict = None, payload: Dict = None
+) -> requests.Response:
     """Make a POST request."""
-    return make_request("POST", headers=headers, payload=payload)
+    return make_request(
+        "POST", api_endpoint=api_endpoint, headers=headers, payload=payload
+    )
 
 
-def put_request(headers: Dict = None, payload: Dict = None) -> requests.Response:
+def put_request(
+        api_endpoint: str = None, headers: Dict = None, payload: Dict = None
+) -> requests.Response:
     """Make a PUT request."""
-    return make_request("PUT", headers=headers, payload=payload)
+    return make_request(
+        "PUT", api_endpoint=api_endpoint, headers=headers, payload=payload
+    )
 
 
-def delete_request(headers: Dict = None) -> requests.Response:
+def delete_request(api_endpoint: str = None, headers: Dict = None) -> requests.Response:
     """Make a DELETE request."""
-    return make_request("DELETE", headers=headers)
+    return make_request("DELETE", api_endpoint=api_endpoint, headers=headers)
