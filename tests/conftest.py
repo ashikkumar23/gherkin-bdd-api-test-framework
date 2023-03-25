@@ -1,22 +1,19 @@
-# pylint: disable=invalid-name
-# pylint: disable=protected-access
-# pylint: disable=wildcard-import
-# pylint: disable=unused-wildcard-import
-
-from collections import defaultdict
+import os
 
 from cucumber_tag_expressions import parse
+from dotenv import load_dotenv, find_dotenv
 
 from step_definitions.test_common import *
 from step_definitions.test_assertions import *
 
 from lib.terminal_report import pytest_terminal_summary
 
+load_dotenv(find_dotenv())
+
 
 def pytest_configure(config):
     config.option.keyword = "automated"
     config.option.markexpr = "not not_in_scope"
-    pytest.globalDict = defaultdict()
 
 
 def pytest_addoption(parser):
@@ -35,3 +32,9 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture(scope="session")
 def context():
     return {}
+
+
+@pytest.fixture(scope="session")
+def base_url():
+    """Fixture to set the Base URL from environment variable"""
+    return os.environ.get("BASE_URL")
