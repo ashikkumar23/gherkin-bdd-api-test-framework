@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 from typing import Dict
 
-import pytest
 import requests
 
 from utils.custom_exceptions import InvalidFileFormatException, FileNotFoundException
@@ -31,7 +30,7 @@ def get_file_path(file_name: str) -> Path:
 
 
 def make_request(
-        method: str, api_endpoint: str, headers: Dict = None, payload: Dict = None
+    method: str, api_endpoint: str, headers: Dict = None, payload: Dict = None
 ) -> requests.Response:
     """Make a request using the given method and log the request & response details."""
     response = session.request(method, api_endpoint, headers=headers, json=payload)
@@ -56,7 +55,7 @@ def get_request(api_endpoint: str = None, headers: Dict = None) -> requests.Resp
 
 
 def post_request(
-        api_endpoint: str = None, headers: Dict = None, payload: Dict = None
+    api_endpoint: str = None, headers: Dict = None, payload: Dict = None
 ) -> requests.Response:
     """Make a POST request."""
     return make_request(
@@ -65,7 +64,7 @@ def post_request(
 
 
 def put_request(
-        api_endpoint: str = None, headers: Dict = None, payload: Dict = None
+    api_endpoint: str = None, headers: Dict = None, payload: Dict = None
 ) -> requests.Response:
     """Make a PUT request."""
     return make_request(
