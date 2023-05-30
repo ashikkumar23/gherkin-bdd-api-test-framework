@@ -1,4 +1,4 @@
-requests==2.23.0
+requests==2.31.0
 pytest==5.4.2
 pytest-bdd==4.0.2
 assertpy==1.0
