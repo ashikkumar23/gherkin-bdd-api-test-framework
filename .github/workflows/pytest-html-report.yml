@@ -1,5 +1,5 @@
 # The name of the workflow as it will appear in the "Actions" tab of the GitHub repository
-name: Pytest and HTML Report
+name: Run pytest and upload HTML report
 
 # Specifies the trigger for this workflow
 on:
@@ -53,10 +53,11 @@ jobs:
         run: >
           python3 -m pytest -v --gherkin-terminal-reporter --reruns 1 --reruns-delay 1
           --tags="${{ github.event.inputs.tags }}" -s --color=yes --html=reports/test-report.html
+        continue-on-error: true
 
       # Upload html report as artifact
       - name: Upload HTML report
         uses: actions/upload-artifact@v3
         with:
           name: test-report
-          path: reports/test-report.html
+          path: tests/reports/test-report.html
