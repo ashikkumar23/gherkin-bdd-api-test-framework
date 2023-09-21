@@ -60,7 +60,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: test-report
-          path: reports/test-report.html
-
-      - name: List contents of reports directory
-        run: ls reports
+          path: tests/reports/test-report.html
