@@ -1,6 +1,6 @@
 # **API Automation Framework**
 
-[![Actions Status](https://github.com/ashikkumar23/bdd-gherkin-api-test-automation-framework/workflows/Run%20tests/badge.svg)](https://github.com/ashikkumar23/bdd-gherkin-api-test-automation-framework/actions/workflows/ci.yml)
+[![Actions Status](https://github.com/ashikkumar23/gherkin-bdd-api-test-framework/workflows/Run%20pytest%20and%20upload%20HTML%20report/badge.svg)](https://github.com/ashikkumar23/gherkin-bdd-api-test-framework/actions/workflows/pytest-html-report.yml)
 
 API Automation Framework using `pytest` and `pytest-bdd`
 
